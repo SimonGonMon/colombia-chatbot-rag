@@ -8,7 +8,7 @@ class TextProcessor:
     Limpia y divide texto en fragmentos (chunks) para su procesamiento en el pipeline RAG.
     """
 
-    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
+    def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
         """
         Inicializa el TextProcessor con un divisor de texto configurado.
 
