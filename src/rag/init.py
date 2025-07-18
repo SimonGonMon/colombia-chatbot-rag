@@ -18,26 +18,26 @@ def main():
     3. Lo divide en chunks de tamaño manejable.
     4. Genera embeddings para cada chunk y los almacena en el vector store (Pinecone).
     """
-    print("--- INICIANDO PIPELINE DE INGESTA RAG ---")
+    print("--- PIPELINE DE INGESTA RAG ---")
 
     # 1. Extracción de Datos
     print("[1/4] Extrayendo contenido de Wikipedia...")
     extractor = DataExtractor()
     raw_text = extractor.fetch_content()
     if not raw_text:
-        print("Error: No se pudo extraer contenido. Abortando pipeline")
+        print("/!\\ Error: No se pudo extraer contenido /!\\")
         return
 
     # 2. Limpieza y Procesamiento de Texto
     print("[2/4] Limpiando y procesando texto...")
-    processor = TextProcessor(chunk_size=1000, chunk_overlap=200)
+    processor = TextProcessor(chunk_size=2000, chunk_overlap=250)
     clean_text = processor.clean_text(raw_text)
 
     # 3. División en Chunks
     print("[3/4] Dividiendo texto en chunks...")
     chunks = processor.chunk_text(clean_text)
     if not chunks:
-        print("Error: No se generaron chunks a partir del texto. Abortando pipeline")
+        print("/!\\ Error: No se generaron chunks a partir del texto /!\\")
         return
     print(f"Texto dividido en {len(chunks)} chunks.")
 
@@ -52,13 +52,13 @@ def main():
         ]
         vector_store.add_texts(chunks, metadatas=metadatas)
     except Exception as e:
-        print(f"Error durante el almacenamiento en Pinecone: {e}")
+        print(f"/!\\ Error durante el almacenamiento en Pinecone: {e} /!\\")
         print(
             "Asegúrate de que las variables de entorno OPENAI_API_KEY y PINECONE_API_KEY están configuradas correctamente"
         )
         return
 
-    print("--- FINISHED ---")
+    print("--- FIN PIPELINE ---")
 
 
 if __name__ == "__main__":

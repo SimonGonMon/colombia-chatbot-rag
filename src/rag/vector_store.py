@@ -1,7 +1,7 @@
 import os
 from langchain_pinecone import PineconeVectorStore as LangchainPinecone
 from langchain_openai import OpenAIEmbeddings
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 
 class VectorStore:
@@ -73,3 +73,16 @@ class VectorStore:
             List[Dict[str, Any]]: Una lista de documentos similares encontrados.
         """
         return self.store.similarity_search(query, k=top_k)
+
+    def similarity_search_with_score(self, query: str, top_k: int = 5):
+        """
+        Realiza una búsqueda por similitud en el índice y retorna documentos y scores.
+
+        Args:
+            query (str): La consulta para la búsqueda.
+            top_k (int): El número de resultados a devolver.
+
+        Returns:
+            List[Tuple[Document, float]]: Lista de tuplas (documento, score)
+        """
+        return self.store.similarity_search_with_score(query, k=top_k)
