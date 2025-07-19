@@ -2,9 +2,36 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.config import DATABASE_URL
 
-engine = create_async_engine(DATABASE_URL, echo=True)
-AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+# --- Configuración del Motor de Base de Datos Asíncrono ---
+# Se crea un motor de SQLAlchemy para la conexión asíncrona con la base de datos.
+# `echo=True` es útil para depuración, ya que imprime las consultas SQL generadas.
+# Debería desactivarse en producción para evitar logs excesivos.
+engine = create_async_engine(DATABASE_URL, echo=False)
 
-async def get_db():
+# --- Fábrica de Sesiones Asíncronas ---
+# `AsyncSessionLocal` es una fábrica que crea nuevas sesiones de base de datos asíncronas
+# cuando es llamada. `expire_on_commit=False` previene que los objetos se desvinculen
+# de la sesión después de un commit, lo cual es útil en FastAPI.
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+# --- Dependencia de Sesión de Base de Datos ---
+async def get_db() -> AsyncSession:
+    """
+    Dependencia de FastAPI para obtener una sesión de base de datos asíncrona.
+
+    Este generador crea una nueva sesión para cada petición, la proporciona al endpoint
+    y se asegura de que se cierre correctamente al finalizar, incluso si ocurren errores.
+
+    Yields:
+        AsyncSession: Una sesión de base de datos asíncrona.
+    """
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.close()
