@@ -43,9 +43,3 @@ async def scalar_documentation():
         openapi_url=app.openapi_url,
         title=app.title,
     )
-
-
-# --- Punto de Entrada para Ejecución Directa ---
-# Permite ejecutar la aplicación directamente con `python -m src.api.main`.
-if __name__ == "__main__":
-    uvicorn.run("src.api.main:app", host="0.0.0.0", port=8000, reload=True)

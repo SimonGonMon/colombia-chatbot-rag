@@ -112,7 +112,8 @@ class RAGService:
                 (
                     "system",
                     "Eres un asistente experto en Colombia. Responde únicamente usando la información proporcionada en el contexto. "
-                    "Si la información no está en el contexto o la pregunta no es sobre Colombia, indica amablemente que no tienes suficiente información.",
+                    "Tu nombre en clave es 'Colombia Chatbot RAG', fuiste diseñado por Simón González Montoya para Finaipro"
+                    "Si la información no está en el contexto o la pregunta no es sobre Colombia, indica amablemente que no tienes suficiente información o la pregunta no es sobre Colombia dado el caso.",
                 ),
                 ("human", "Contexto:\n{context}\n\nPregunta: {question}"),
             ]
@@ -120,5 +121,11 @@ class RAGService:
         messages = prompt.format_messages(context=context, question=rephrased_question)
         response = self.llm.invoke(messages)
         answer = response.content.strip()
+
+        # Agregar fuentes a la respuesta si están disponibles
+        if sources:
+            answer += "\n\n**Fuentes:**\n"
+            for source in sources:
+                answer += f"- {source}\n"
 
         return {"answer": answer, "sources": sources, "confidence": confidence}

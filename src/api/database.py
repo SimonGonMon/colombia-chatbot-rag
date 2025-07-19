@@ -7,7 +7,8 @@ load_dotenv()
 
 # --- Configuración del Motor de Base de Datos Asíncrono ---
 # Se crea un motor de SQLAlchemy para la conexión asíncrona con la base de datos.
-engine = create_async_engine(os.getenv("DATABASE_URL"), echo=False)
+engine = create_async_engine(os.getenv("DATABASE_URL"), echo=True)
+
 
 # --- Fábrica de Sesiones Asíncronas ---
 # `AsyncSessionLocal` es una fábrica que crea nuevas sesiones de base de datos asíncronas
