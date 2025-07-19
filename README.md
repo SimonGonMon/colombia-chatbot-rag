@@ -18,7 +18,7 @@ Puedes ejecutar la aplicación completa usando Docker Compose o levantar cada se
 
 ### Nota sobre la Configuración Inicial
 
-**Si se te han proporcionado las variables de entorno para este proyecto (por ejemplo, como parte de una prueba técnica), la base de datos ya está configurada y puedes omitir el paso de la migración con Alembic.**
+**Si se te han proporcionado las variables de entorno para este proyecto (por ejemplo, como parte de una prueba técnica 🤪), la base de datos ya está configurada y puedes omitir el paso de la migración con Alembic.**
 
 Si estás configurando el proyecto desde cero por tu cuenta, necesitarás inicializar la base de datos:
 1.  Crea tu archivo `.env` a partir del `.env.example` y rellena tus propias credenciales.
