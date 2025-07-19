@@ -1,0 +1,46 @@
+# Stage 1: Build the application
+FROM ghcr.io/astral-sh/uv:bookworm-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+ENV UV_PYTHON_INSTALL_DIR=/python
+ENV UV_PYTHON_PREFERENCE=only-managed
+
+# Install Python before the project for caching
+RUN uv python install 3.11
+
+WORKDIR /app
+COPY pyproject.toml uv.lock* ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
+
+# Debug: List contents of virtual environment
+RUN ls -l /app/.venv/bin
+
+# Stage 2: Final image
+FROM python:3.11-slim
+
+# Create app user
+RUN useradd -ms /bin/bash app
+
+# Copy the Python version
+COPY --from=builder --chown=app:app /python /python
+
+# Copy the application and virtual environment from the builder
+COPY --from=builder --chown=app:app /app /app
+
+# Ensure streamlit executable has correct permissions
+RUN chmod +x /app/.venv/bin/streamlit
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Switch to non-root user
+USER app
+
+# Expose the port the app runs on
+EXPOSE 8501
+
+# Command to run the application
+CMD ["streamlit", "run", "/app/streamlit_app/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
