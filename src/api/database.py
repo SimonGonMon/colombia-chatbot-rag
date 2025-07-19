@@ -1,12 +1,13 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from src.config import DATABASE_URL
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # --- Configuración del Motor de Base de Datos Asíncrono ---
 # Se crea un motor de SQLAlchemy para la conexión asíncrona con la base de datos.
-# `echo=True` es útil para depuración, ya que imprime las consultas SQL generadas.
-# Debería desactivarse en producción para evitar logs excesivos.
-engine = create_async_engine(DATABASE_URL, echo=False)
+engine = create_async_engine(os.getenv("DATABASE_URL"), echo=False)
 
 # --- Fábrica de Sesiones Asíncronas ---
 # `AsyncSessionLocal` es una fábrica que crea nuevas sesiones de base de datos asíncronas
