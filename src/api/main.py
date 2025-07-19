@@ -1,11 +1,15 @@
 from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
 from src.api.endpoints.chat import router as chat_router
+from src.api.endpoints.conversations import router as conversations_router
 import uvicorn
 
 app = FastAPI(title="Colombia RAG Chatbot API", version="1.0.0")
 
-app.include_router(chat_router)
+app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(
+    conversations_router, prefix="/api/v1/conversations", tags=["conversations"]
+)
 
 
 # Endpoint para la documentación Scalar
