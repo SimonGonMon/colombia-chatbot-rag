@@ -19,11 +19,6 @@ class DataExtractor:
         """
         Obtiene el contenido principal de la página de Wikipedia.
 
-        Realiza una solicitud GET con un User-Agent de navegador para asegurar
-        la recepción del HTML completo. Selecciona el contenedor de contenido
-        principal y extrae el texto de las etiquetas <p> y <h*>, asegurando
-        que los espacios se manejen correctamente.
-
         Returns:
             Optional[str]: Una cadena con el texto limpio del artículo, o None si ocurre un error.
         """
@@ -38,26 +33,20 @@ class DataExtractor:
 
             all_divs = soup.find_all("div", class_="mw-parser-output")
             if not all_divs:
-                raise ValueError(
-                    "No se encontró ningún div con la clase 'mw-parser-output'."
-                )
-
+                raise ValueError("No se encontró ningún div con la clase 'mw-parser-output'.")
             content_div = max(all_divs, key=lambda div: len(str(div)))
 
             text_elements = []
             for elem in content_div.find_all(["p", "h2", "h3", "h4"]):
-                if elem.find_parent(
-                    ["table", "div"], class_=["infobox", "navbox", "thumb"]
-                ):
+                if elem.find_parent(["table", "div"], class_=["infobox", "navbox", "thumb"]):
                     continue
 
                 text = elem.get_text(separator=" ", strip=True)
                 if text:
                     if elem.name.startswith("h"):
-                        # Limpiar el texto del título y solo añadirlo si no está vacío
                         clean_title = text.replace("[editar]", "").strip()
                         if clean_title:
-                            text_elements.append(f"\n\n--- {clean_title} ---\n")
+                            text_elements.append(f"\n\n== {clean_title} ==\n")
                     else:
                         text_elements.append(text)
 
@@ -69,29 +58,3 @@ class DataExtractor:
         except Exception as e:
             print(f"Error inesperado durante la extracción: {e}")
             return None
-
-
-if __name__ == "__main__":
-    extractor = DataExtractor()
-    content = extractor.fetch_content()
-
-    if content:
-        # Usar una expresión regular para dividir por los títulos --- Título ---
-        sections = re.split(r"\n\n--- .*? ---\n", content)
-
-        # Filtrar secciones vacías que pueden resultar de la división
-        section_lengths = [
-            len(section.strip()) for section in sections if section.strip()
-        ]
-
-        if section_lengths:
-            avg_len = sum(section_lengths) / len(section_lengths)
-            min_len = min(section_lengths)
-            max_len = max(section_lengths)
-
-            print(f"Número total de secciones de texto: {len(section_lengths)}")
-            print(f"Longitud promedio por sección: {avg_len:.0f} caracteres")
-        else:
-            print("No se encontró contenido textual en las secciones para analizar.")
-    else:
-        print("No se pudo extraer contenido para el análisis.")

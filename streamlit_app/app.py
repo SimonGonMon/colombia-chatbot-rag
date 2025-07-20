@@ -57,12 +57,11 @@ def handle_new_conversation():
 
 async def handle_send_message(question: str):
     """Maneja el envío de un nuevo mensaje al backend."""
-    # Optimistically display the user's message
     st.session_state.messages.append({"content": question, "is_user": True})
+
     with st.chat_message("user"):
         st.markdown(question)
 
-    # Process the response
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         with st.spinner("Pensando..."):
@@ -71,21 +70,19 @@ async def handle_send_message(question: str):
             )
 
         if response:
-            # If it was a new chat, a new conversation was created
+            full_response = response.get("answer", "No se recibió respuesta.")
+            # Añadir la respuesta del asistente al historial de chat ANTES de cualquier posible rerun
+            st.session_state.messages.append(
+                {"content": full_response, "is_user": False}
+            )
+            message_placeholder.markdown(full_response)  # Mostrarla inmediatamente
+
             if st.session_state.current_conversation_id is None:
                 st.session_state.current_conversation_id = UUID(
                     response["conversation_id"]
                 )
-                # Reload conversations to show the new one in the sidebar
                 await load_conversations()
                 st.rerun()
-
-            full_response = response.get("answer", "No se recibió respuesta.")
-            message_placeholder.markdown(full_response)
-            # Add assistant response to chat history
-            st.session_state.messages.append(
-                {"content": full_response, "is_user": False}
-            )
         else:
             full_response = (
                 "Hubo un error al procesar tu pregunta. Por favor, inténtalo de nuevo."
@@ -93,12 +90,11 @@ async def handle_send_message(question: str):
             message_placeholder.markdown(full_response)
 
 
-async def main():
-    """Función principal que se ejecuta para renderizar la página."""
+async def render_main_app():
+    """Renderiza la aplicación principal una vez que la API está confirmada como saludable."""
     if not st.session_state.conversations:
         await load_conversations()
 
-    # Load messages if a conversation was selected
     if st.session_state.is_loading and st.session_state.current_conversation_id:
         await load_messages(st.session_state.current_conversation_id)
         st.session_state.is_loading = False
@@ -114,9 +110,26 @@ async def main():
         current_conversation_id=st.session_state.current_conversation_id,
     )
 
-    # The chat input is now always enabled.
     if prompt := st.chat_input("¿Cuál es la capital de Colombia?"):
         await handle_send_message(prompt)
+
+
+async def main():
+    """Punto de entrada principal: verifica la salud de la API y luego ejecuta la app."""
+    is_api_healthy = await st.session_state.api_client.check_api_health()
+
+    if not is_api_healthy:
+        st.title("🤖 API no disponible")
+        st.error(
+            "No se pudo establecer conexión con el backend. "
+            "Por favor, asegúrate de que el servicio de la API esté en funcionamiento."
+        )
+        st.warning("Una vez que la API esté activa, puedes recargar la página.")
+        if st.button("Volver a intentar"):
+            st.rerun()
+        st.stop()
+
+    await render_main_app()
 
 
 if __name__ == "__main__":

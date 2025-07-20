@@ -5,6 +5,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 from src.rag.vector_store import VectorStore
 from src.models.sql import Message
+from src.services.prompt_manager import get_enhanced_prompt
 
 
 class RAGService:
@@ -18,9 +19,7 @@ class RAGService:
         Inicializa el servicio RAG, configurando los modelos de lenguaje y el almacén de vectores.
         """
         self.vector_store = VectorStore()
-        # Modelo principal para la generación de respuestas
-        self.llm = ChatOpenAI(model="gpt-4o", temperature=0)
-        # Modelo más pequeño y rápido para la reformulación de preguntas
+        self.llm = ChatOpenAI(model="gpt-4o", temperature=0.1)
         self.rephrase_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
     def _rephrase_question_with_history(
@@ -29,13 +28,6 @@ class RAGService:
         """
         Reformulación de una pregunta de seguimiento para que sea autocontenida,
         utilizando el historial de la conversación para añadir contexto.
-
-        Args:
-            question (str): La pregunta de seguimiento del usuario.
-            history (List[Message]): El historial de mensajes de la conversación.
-
-        Returns:
-            str: La pregunta reformulada y autocontenida.
         """
         if not history:
             return question
@@ -72,22 +64,10 @@ class RAGService:
 
     def answer_question(self, question: str, history: List[Message]) -> Dict[str, Any]:
         """
-        Orquesta el proceso completo de RAG para responder una pregunta.
-
-        1.  Reformulación de la pregunta con el historial.
-        2.  Búsqueda de documentos relevantes en el almacén de vectores.
-        3.  Generación de una respuesta aumentada con el contexto recuperado.
-
-        Args:
-            question (str): La pregunta actual del usuario.
-            history (List[Message]): El historial de la conversación.
-
-        Returns:
-            Dict[str, Any]: Un diccionario con la respuesta, las fuentes y la confianza.
+        Orquesta el proceso completo de RAG para responder una pregunta con prompts mejorados.
         """
         rephrased_question = self._rephrase_question_with_history(question, history)
 
-        # Búsqueda de similitud para obtener documentos y puntuaciones
         results_with_scores = self.vector_store.similarity_search_with_score(
             rephrased_question, top_k=5
         )
@@ -98,34 +78,28 @@ class RAGService:
                 "confidence": 0.0,
             }
 
-        # Preparación del contexto y metadatos
         context = "\n\n".join([doc.page_content for doc, _ in results_with_scores])
-        sources = list(
-            set([doc.metadata.get("source", "") for doc, _ in results_with_scores])
-        )
+        sources = [
+            doc.metadata for doc, _ in results_with_scores
+        ]  # Extraer metadatos completos
         scores = [score for _, score in results_with_scores]
         confidence = float(sum(scores)) / len(scores) if scores else 0.0
 
-        # Generación de la respuesta final con el LLM principal
+        # Construir el prompt dinámico y mejorado
+        system_prompt = get_enhanced_prompt(rephrased_question, context, sources)
+        
         prompt = ChatPromptTemplate.from_messages(
             [
-                (
-                    "system",
-                    "Eres un asistente experto en Colombia. Responde únicamente usando la información proporcionada en el contexto. "
-                    "Tu nombre en clave es 'Colombia Chatbot RAG', fuiste diseñado por Simón González Montoya para Finaipro"
-                    "Si la información no está en el contexto o la pregunta no es sobre Colombia, indica amablemente que no tienes suficiente información o la pregunta no es sobre Colombia dado el caso.",
-                ),
-                ("human", "Contexto:\n{context}\n\nPregunta: {question}"),
+                ("system", system_prompt),
+                ("human", "Pregunta: {question}"),
             ]
         )
-        messages = prompt.format_messages(context=context, question=rephrased_question)
+        
+        messages = prompt.format_messages(question=rephrased_question)
         response = self.llm.invoke(messages)
         answer = response.content.strip()
 
-        # Agregar fuentes a la respuesta si están disponibles
-        if sources:
-            answer += "\n\n**Fuentes:**\n"
-            for source in sources:
-                answer += f"- {source}\n"
+        # Las fuentes ahora se manejan dentro del prompt, pero las devolvemos para referencia
+        source_list = list(set([s.get("source", "") for s in sources if isinstance(s, dict)]))
 
-        return {"answer": answer, "sources": sources, "confidence": confidence}
+        return {"answer": answer, "sources": source_list, "confidence": confidence}

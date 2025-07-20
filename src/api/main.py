@@ -43,3 +43,14 @@ async def scalar_documentation():
         openapi_url=app.openapi_url,
         title=app.title,
     )
+
+
+# --- Endpoint de Health Check ---
+# Este endpoint se utiliza para verificar el estado de la API.
+# Devuelve una respuesta simple para confirmar que el servicio está activo.
+@app.get("/api/v1/health", tags=["Health"])
+async def health_check():
+    """
+    Verifica el estado de la API.
+    """
+    return {"status": "ok"}

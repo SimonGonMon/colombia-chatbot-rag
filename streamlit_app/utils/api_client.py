@@ -81,3 +81,16 @@ class APIClient:
         except httpx.RequestError as e:
             print(f"Error de red al preguntar: {e}")
             return None
+
+    async def check_api_health(self) -> bool:
+        """
+        Verifica si la API está disponible y saludable.
+        """
+        try:
+            async with httpx.AsyncClient(base_url=self.base_url, timeout=5.0) as client:
+                response = await client.get("/health")
+                response.raise_for_status()
+                return response.status_code == 200
+        except (httpx.RequestError, httpx.HTTPStatusError) as e:
+            print(f"Error al verificar la salud de la API: {e}")
+            return False
