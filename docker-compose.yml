@@ -1,14 +1,35 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chatbot_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - chatbot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d chatbot_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://user:password@db:5432/chatbot_db"
     env_file:
       - .env
     networks:
       - chatbot-network
+    depends_on:
+      db:
+        condition: service_healthy
 
   streamlit:
     build:
@@ -28,3 +49,6 @@ services:
 networks:
   chatbot-network:
     driver: bridge
+
+volumes:
+  db_data:
