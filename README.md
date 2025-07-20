@@ -25,6 +25,8 @@ Este chatbot va más allá de una simple respuesta, incorporando lógicas comple
 
 ## Cómo Ejecutar el Proyecto
 
+**Nota Importante:** Si se te han proporcionado las variables de entorno necesarias (por ejemplo, como parte de una prueba técnica 😼), es probable que la base de datos vectorial (Pinecone) ya contenga los embeddings pre-generados. En este caso, simplemente ejecutar el proyecto con Docker Compose será suficiente para ponerlo en marcha.
+
 La forma más sencilla y recomendada de poner en marcha el proyecto completo es utilizando Docker Compose, ya que gestiona automáticamente la base de datos y las dependencias entre servicios.
 
 ### Usando Docker Compose (Recomendado)
@@ -83,6 +85,12 @@ Si prefieres no usar Docker, puedes ejecutar la API y la aplicación de Streamli
     ```bash
     source .venv/bin/activate
     ```
+
+6.  **Generar Embeddings (Solo si no están pre-generados):** Si estás configurando el proyecto desde cero y tu base de datos vectorial está vacía, necesitarás generar los embeddings. Asegúrate de que tus variables de entorno de Pinecone y OpenAI estén configuradas, y luego ejecuta:
+    ```bash
+    python src/rag/init.py
+    ```
+    Este script descargará el contenido de Wikipedia, lo procesará y lo subirá a tu índice de Pinecone.
 
 #### 1. Iniciar la API (Backend)
 
