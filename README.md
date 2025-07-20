@@ -12,6 +12,17 @@ Este proyecto implementa un chatbot especializado en responder preguntas sobre C
 *   **Base de Datos Conversacional:** PostgreSQL (vía Alembic para migraciones)
 *   **Contenerización:** Docker
 
+## Capacidades Avanzadas del Chatbot
+
+Este chatbot va más allá de una simple respuesta, incorporando lógicas complejas para ofrecer una experiencia conversacional superior:
+
+*   **Especialización por Tipo de Pregunta:** El chatbot adapta su "persona" (historiador, geógrafo, antropólogo cultural) según la intención de la pregunta, proporcionando respuestas más precisas y enfocadas.
+*   **Respuestas Estructuradas:** Las respuestas se presentan en un formato claro y consistente, incluyendo una respuesta directa, detalles clave y contexto adicional, facilitando la comprensión.
+*   **Validación de Relevancia:** Solo responde preguntas relacionadas con Colombia. Si la pregunta está fuera de su dominio, lo indica amablemente.
+*   **Complejidad de Respuesta Gradual:** Ajusta el nivel de detalle de la respuesta (breve, balanceada o detallada) según las palabras clave en la pregunta del usuario.
+*   **Citas Inteligentes:** Proporciona la sección específica de Wikipedia de donde se extrajo la información, aumentando la transparencia y la confianza en las respuestas.
+*   **Conversaciones con Estado (Stateful):** Gracias a su integración con una base de datos, el chatbot puede recordar el contexto de conversaciones pasadas, permitiendo diálogos fluidos y coherentes a lo largo del tiempo.
+
 ## Cómo Ejecutar el Proyecto
 
 Puedes ejecutar la aplicación completa usando Docker Compose o levantar cada servicio (API y Streamlit) de forma local.
