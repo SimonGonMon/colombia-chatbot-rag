@@ -2,6 +2,9 @@ import os
 from langchain_pinecone import PineconeVectorStore as LangchainPinecone
 from langchain_openai import OpenAIEmbeddings
 from typing import List, Dict, Any, Tuple
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class VectorStore:
@@ -47,19 +50,18 @@ class VectorStore:
             index_name=self.index_name, embedding=embeddings
         )
 
-    def add_texts(self, texts: List[str], metadatas: List[Dict[str, Any]] = None):
+    def add_documents(self, documents: List[Any]):
         """
-        Añade textos y sus metadatos al índice de Pinecone.
+        Añade una lista de objetos Document de LangChain al índice de Pinecone.
 
         Args:
-            texts (List[str]): La lista de textos a indexar.
-            metadatas (List[Dict[str, Any]], optional): Una lista de diccionarios de metadatos, uno por cada texto.
+            documents (List[Document]): La lista de documentos a indexar.
         """
         print(
-            f"Añadiendo {len(texts)} textos al índice '{self.index_name}' de Pinecone..."
+            f"Añadiendo {len(documents)} documentos al índice '{self.index_name}' de Pinecone..."
         )
-        self.store.add_texts(texts, metadatas=metadatas)
-        print("Textos añadidos exitosamente.")
+        self.store.add_documents(documents)
+        print("Documentos añadidos exitosamente.")
 
     def similarity_search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """
