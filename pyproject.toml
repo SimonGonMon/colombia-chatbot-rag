@@ -23,4 +23,5 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "streamlit>=1.36.0",
     "httpx>=0.27.0",
+    "pytest>=8.4.1",
 ]

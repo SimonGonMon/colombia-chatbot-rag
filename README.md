@@ -9,7 +9,7 @@ Este proyecto implementa un chatbot especializado en responder preguntas sobre C
 *   **Modelos de Lenguaje:** OpenAI gpt-4o (principal) y gpt-4o-mini (apoyo)
 *   **Embeddings:** OpenAI text-embedding-3-small
 *   **Base de Datos Vectorial:** Pinecone
-*   **Base de Datos Conversacional:** PostgreSQL (vía Alembic para migraciones)
+*   **Base de Datos Conversacional:** PostgreSQL
 *   **Contenerización:** Docker
 
 ## Capacidades Avanzadas del Chatbot
@@ -25,39 +25,42 @@ Este chatbot va más allá de una simple respuesta, incorporando lógicas comple
 
 ## Cómo Ejecutar el Proyecto
 
-Puedes ejecutar la aplicación completa usando Docker Compose o levantar cada servicio (API y Streamlit) de forma local.
-
-### Nota sobre la Configuración Inicial
-
-**Si se te han proporcionado las variables de entorno para este proyecto (por ejemplo, como parte de una prueba técnica 🤪), la base de datos ya está configurada y puedes omitir el paso de la migración con Alembic.**
-
-Si estás configurando el proyecto desde cero por tu cuenta, necesitarás inicializar la base de datos:
-1.  Crea tu archivo `.env` a partir del `.env.example` y rellena tus propias credenciales.
-2.  Ejecuta las migraciones de la base de datos con Alembic:
-    ```bash
-    alembic upgrade head
-    ```
+La forma más sencilla y recomendada de poner en marcha el proyecto completo es utilizando Docker Compose, ya que gestiona automáticamente la base de datos y las dependencias entre servicios.
 
 ### Usando Docker Compose (Recomendado)
 
-Este es el método más sencillo para poner en marcha todo el sistema.
+Este método configura y ejecuta todos los servicios (API, Streamlit y PostgreSQL) con un solo comando.
 
 1.  Asegúrate de tener Docker y Docker Compose instalados.
-2.  En la raíz del proyecto, ejecuta el siguiente comando:
+2.  Crea tu archivo `.env` a partir del `.env.example` y rellena tus propias credenciales para `OPENAI_API_KEY`, `PINECONE_API_KEY`, y `PINECONE_INDEX_NAME`. La `DATABASE_URL` y `API_BASE_URL` se configuran automáticamente en `docker-compose.yml`.
+3.  En la raíz del proyecto, ejecuta el siguiente comando:
     ```bash
     docker-compose up --build
     ```
-3.  Una vez que los contenedores estén en funcionamiento:
+4.  Una vez que los contenedores estén en funcionamiento:
     *   Accede a la interfaz del chatbot en: **http://localhost:8501**
     *   La documentación interactiva de la API (Scalar) estará disponible en: **http://localhost:8000**
 
-### Ejecución Local
+### Ejecución Local (Requiere Pasos Extra)
 
-Si prefieres no usar Docker, puedes ejecutar la API y la aplicación de Streamlit por separado.
+Si prefieres no usar Docker, puedes ejecutar la API y la aplicación de Streamlit por separado. Este método requiere una configuración manual de la base de datos y las variables de entorno.
 
 #### Prerrequisitos y Configuración
 
-1.  **Instalar uv (Recomendado)**: La forma más rápida de configurar el entorno es con `uv`. Se recomienda instalarlo en tu entorno global de Python.
+1.  **Base de Datos PostgreSQL:** Asegúrate de tener una instancia de PostgreSQL ejecutándose localmente y accesible. La API creará las tablas automáticamente al iniciar.
+2.  **Variables de Entorno:** Crea tu archivo `.env` a partir del `.env.example` y rellena las siguientes variables:
+    *   `DATABASE_URL`: La URL de conexión a tu base de datos PostgreSQL local. Ejemplo:
+        ```
+        DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/your_database_name"
+        ```
+    *   `OPENAI_API_KEY`, `PINECONE_API_KEY`, `PINECONE_INDEX_NAME`: Tus credenciales.
+    *   `API_BASE_URL`: Para la comunicación entre Streamlit y la API local. Debe ser:
+        ```
+        API_BASE_URL=http://localhost:8000/api/v1
+        ```
+        (Nota: Esta variable se sobreescribe en Docker Compose).
+
+3.  **Instalar uv (Recomendado)**: La forma más rápida de configurar el entorno es con `uv`. Se recomienda instalarlo en tu entorno global de Python.
     ```bash
     pip install uv
     ```
@@ -67,7 +70,7 @@ Si prefieres no usar Docker, puedes ejecutar la API y la aplicación de Streamli
     ```
     Este comando leerá el `pyproject.toml`, usará el `uv.lock` para instalar las versiones exactas de las dependencias y creará un entorno virtual en `.venv` si no existe.
 
-2.  **Alternativa (pip + venv)**: Si prefieres no usar `uv`, puedes seguir el método tradicional:
+4.  **Alternativa (pip + venv)**: Si prefieres no usar `uv`, puedes seguir el método tradicional:
     ```bash
     # Crear y activar un entorno virtual
     python -m venv .venv
@@ -76,7 +79,7 @@ Si prefieres no usar Docker, puedes ejecutar la API y la aplicación de Streamli
     pip install -r requirements.txt
     ```
 
-3.  **Activar el Entorno Virtual**: Antes de continuar, asegúrate de que el entorno esté activado:
+5.  **Activar el Entorno Virtual**: Antes de continuar, asegúrate de que el entorno esté activado:
     ```bash
     source .venv/bin/activate
     ```
@@ -142,3 +145,16 @@ El proyecto está completamente dockerizado para un despliegue sencillo y portab
 *   `Dockerfile`: Define la imagen para la API de FastAPI.
 *   `Dockerfile.streamlit`: Define la imagen para la interfaz de Streamlit.
 *   `docker-compose.yml`: Orquesta la ejecución de ambos servicios, sus redes y configuraciones.
+
+## Tests
+
+El proyecto incluye tests unitarios para asegurar la funcionalidad de los componentes clave. Puedes ejecutar todos los tests desde la raíz del proyecto usando `pytest`:
+
+```bash
+pytest
+```
+
+Los tests se encuentran en la carpeta `tests/` y están organizados de la siguiente manera:
+
+*   `tests/api/test_endpoints.py`: Contiene tests para los endpoints de la API.
+*   `tests/rag/test_data_extractor.py`: Contiene tests para el módulo de extracción de datos RAG.

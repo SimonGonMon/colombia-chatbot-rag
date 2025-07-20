@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
 
 from src.api.endpoints import chat, conversations
+from src.api.database import init_db
 
 # --- Creación de la Aplicación FastAPI ---
 # Se define la aplicación principal de FastAPI con un título y versión.
@@ -21,6 +22,10 @@ app = FastAPI(
     - **Documentación interactiva:** Explora los endpoints con Scalar.
     """,
 )
+
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
 
 # --- Inclusión de Routers ---
 # Se registran los routers de los diferentes módulos de la API.
