@@ -110,7 +110,7 @@ async def render_main_app():
         current_conversation_id=st.session_state.current_conversation_id,
     )
 
-    if prompt := st.chat_input("¿Cuál es la capital de Colombia?"):
+    if prompt := st.chat_input("¿Cuál es la capital de Colombia?", key="main_chat_input"):
         await handle_send_message(prompt)
 
 
