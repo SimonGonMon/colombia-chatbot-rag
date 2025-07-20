@@ -70,18 +70,19 @@ async def handle_send_message(question: str):
             )
 
         if response:
+            full_response = response.get("answer", "No se recibió respuesta.")
+            # Añadir la respuesta del asistente al historial de chat ANTES de cualquier posible rerun
+            st.session_state.messages.append(
+                {"content": full_response, "is_user": False}
+            )
+            message_placeholder.markdown(full_response)  # Mostrarla inmediatamente
+
             if st.session_state.current_conversation_id is None:
                 st.session_state.current_conversation_id = UUID(
                     response["conversation_id"]
                 )
                 await load_conversations()
                 st.rerun()
-
-            full_response = response.get("answer", "No se recibió respuesta.")
-            message_placeholder.markdown(full_response)
-            st.session_state.messages.append(
-                {"content": full_response, "is_user": False}
-            )
         else:
             full_response = (
                 "Hubo un error al procesar tu pregunta. Por favor, inténtalo de nuevo."
