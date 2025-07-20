@@ -2,15 +2,14 @@
 Tests para los endpoints de la API principal.
 
 Estos tests utilizan el TestClient de FastAPI para simular solicitudes HTTP
-y verificar el comportamiento de los endpoints, mockeando las dependencias
-externas como la base de datos y los servicios.
+y verificar el comportamiento de los endpoints.
 """
 
 from fastapi.testclient import TestClient
 from src.api.main import app
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch, MagicMock
 import pytest
-from src.api.database import get_db
+from uuid import uuid4
 
 client = TestClient(app)
 
@@ -22,50 +21,30 @@ def test_health_check():
     assert response.json() == {"status": "ok"}
 
 
-@pytest.fixture
-def mock_services():
-    """
-    Fixture que mockea las dependencias de los servicios RAG y de Conversación,
-    así como la sesión de base de datos, para aislar los tests de la lógica real.
-    """
-    with (
-        patch("src.services.rag_service.RAGService", autospec=True) as MockRAGService,
-        patch(
-            "src.services.conversation_service.ConversationService", autospec=True
-        ) as MockConversationService,
-    ):
-
-        mock_rag_service_instance = MockRAGService.return_value
-        mock_conv_service_instance = MockConversationService.return_value
-
-        mock_db_session = MagicMock()
-
-        mock_scalar_result = MagicMock()
-        mock_scalar_result.first.return_value = None
-        mock_scalar_result.all.return_value = []
-
-        mock_execute_awaitable = AsyncMock(
-            return_value=MagicMock(scalars=MagicMock(return_value=mock_scalar_result))
-        )
-        mock_db_session.execute.return_value = mock_execute_awaitable
-
-        mock_db_session.add.return_value = None
-        mock_db_session.commit = AsyncMock(return_value=None)
-        mock_db_session.refresh = AsyncMock(return_value=None)
-
-        async def override_get_db():
-            """Simula la dependencia get_db de FastAPI."""
-            yield mock_db_session
-
-        app.dependency_overrides[get_db] = override_get_db
-
-        yield mock_rag_service_instance, mock_conv_service_instance, mock_db_session
-
-        app.dependency_overrides = {}
-
-
-def test_ask_question_empty_question(mock_services):
+def test_ask_question_empty_question():
     """Verifica que el endpoint /api/v1/chat/ask maneja correctamente una pregunta vacía."""
     response = client.post("/api/v1/chat/ask", json={"question": ""})
     assert response.status_code == 422
     assert "detail" in response.json()
+
+
+def test_ask_question_valid_question():
+    """Verifica que el endpoint /api/v1/chat/ask responde correctamente con una pregunta válida."""
+    with patch("src.services.rag_service.RAGService") as mock_rag_service:
+        # Configurar el mock para simular una respuesta exitosa
+        mock_response = MagicMock()
+        mock_response.answer = "Esta es una respuesta de prueba"
+        mock_response.sources = ["fuente1", "fuente2"]
+        mock_rag_service.ask_question.return_value = mock_response
+
+        response = client.post(
+            "/api/v1/chat/ask", json={"question": "¿Cuál es la capital de Colombia?"}
+        )
+
+        assert response.status_code == 200
+        response_data = response.json()
+        print(response_data)
+        assert "answer" in response_data
+        assert "sources" in response_data
+        assert "Bogotá" in response_data["answer"]
+        assert response_data["sources"] == ["https://es.wikipedia.org/wiki/Colombia"]
